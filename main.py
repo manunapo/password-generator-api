@@ -1,17 +1,18 @@
 import secrets, string
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from security import api_key_auth
 
 app = FastAPI()
 
-class Password(BaseModel):
-    new_pass: str
+class GeneratedPassword(BaseModel):
+    newpass: str
 
-@app.get("/password/", response_model=Password, status_code=200)
-async def generate_password( length: int = 8, uppercases: bool = True, lowercases: bool = True, digits: bool = True, specials: bool = False):
+@app.get("/newpass/", response_model=GeneratedPassword, status_code=200, dependencies=[Depends(api_key_auth)])
+async def generate_password( length: int = 8, uppercases: bool = True, lowercases: bool = True, digits: bool = True, specials: bool = False) -> dict:
     alphabet = []
     if uppercases:
         alphabet.extend( string.ascii_uppercase)
@@ -24,11 +25,11 @@ async def generate_password( length: int = 8, uppercases: bool = True, lowercase
     if not alphabet:
         alphabet = string.ascii_lowercase
     password = ''.join(secrets.choice(alphabet) for _ in range( length))
-    return {"new_pass": password}
+    return {"newpass": password}
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     return JSONResponse(
-        status_code=400,
+        status_code=status.HTTP_200_OK,
         content=exc.errors()[0],
     )
