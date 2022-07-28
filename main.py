@@ -1,4 +1,5 @@
 import secrets, string
+from turtle import title
 from fastapi import FastAPI, Depends, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,12 +7,12 @@ from pydantic import BaseModel
 
 from security import api_key_auth
 
-app = FastAPI()
+app = FastAPI(title="Password Generator", description="A simple API for generating passwords. You can specify the length, and if it would contain lowercases, uppercases, special characters and or digits.")
 
 class GeneratedPassword(BaseModel):
     newpass: str
 
-@app.get("/newpass/", response_model=GeneratedPassword, status_code=200, dependencies=[Depends(api_key_auth)])
+@app.get("/newpass/", tags=["Generator"], response_model=GeneratedPassword, status_code=200, dependencies=[Depends(api_key_auth)])
 async def generate_password( length: int = 8, uppercases: bool = True, lowercases: bool = True, digits: bool = True, specials: bool = False) -> dict:
     alphabet = []
     if uppercases:
